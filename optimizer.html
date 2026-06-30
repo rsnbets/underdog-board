@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Underdog Parlay Optimizer</title><meta name="robots" content="noindex,nofollow">
+<style>
+:root{--bg:#0b0f14;--panel:#121821;--panel2:#0e141c;--line:#1e2733;--txt:#e7eef6;
+--muted:#8595a6;--accent:#22c55e;--accent2:#38bdf8;--neg:#ef4444;--purple:#c084fc;--chip:#172230;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{padding:16px 22px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.nav{display:flex;gap:14px;margin-bottom:6px}
+.nav a{color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.5px}
+.nav a:hover,.nav a.on{color:var(--accent)}
+h1{font-size:18px;margin:0;letter-spacing:.2px}h1 .ev{color:var(--purple)}
+.meta{color:var(--muted);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;margin-top:7px}
+.meta b{color:var(--txt);font-weight:600}
+.note{color:var(--muted);font-size:11.5px;margin-top:7px;line-height:1.55;max-width:1040px}
+.note b{color:var(--txt)}
+.wrap{padding:16px 22px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.filters input,.filters select{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 10px;font-size:13px}
+.filters label{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
+.count{color:var(--muted);font-size:12px;margin-left:auto}
+.cards{display:flex;flex-direction:column;gap:12px}
+.entry{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ehead{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.ehead .rank{font-weight:700;color:var(--muted);min-width:30px}
+.ehead .stat{font-size:12.5px;color:var(--muted)}
+.ehead .stat b{font-variant-numeric:tabular-nums}
+.ehead .pos{color:var(--accent)}.ehead .pur{color:var(--purple)}.ehead .blue{color:var(--accent2)}
+.legs{padding:6px 14px 10px}
+.leg{display:flex;gap:12px;align-items:baseline;padding:5px 0;border-top:1px solid #131b25;font-variant-numeric:tabular-nums}
+.leg:first-child{border-top:none}
+.leg .pl{font-weight:600;min-width:150px}.leg .gm{color:var(--muted);font-size:11px}
+.leg .mk{color:var(--txt);min-width:150px}
+.leg .sd{text-transform:uppercase;font-size:11px;font-weight:700;min-width:46px}
+.leg .sd.over{color:var(--accent)}.leg .sd.under{color:var(--accent2)}
+.leg .mu{color:var(--purple);min-width:54px}.leg .pr{color:var(--muted);margin-left:auto}
+.empty{color:var(--muted);padding:40px;text-align:center}
+</style></head><body>
+<header>
+  <div class="nav"><a href="./index.html">+EV Finder</a><a href="./optimizer.html" class="on">Optimizer</a></div>
+  <h1>Underdog Parlay <span class="ev">Optimizer</span></h1>
+  <div class="meta" id="meta">loading…</div>
+  <div class="note">
+    Best <b>Pick'em entries</b>. Payout = <b>base(N) × ∏(multiplier)</b>; win prob = ∏(de-vigged true prob, independent).
+    Default = <b>+EV only</b>, ranked by <b>Kelly log-growth</b> (raw EV just stacks longshots).
+    Tick <b>Least-bad</b> to also see the best higher-win slips when nothing's strictly +EV (incl −EV, ranked by EV) —
+    set a <b>Min win %</b> for realistic entries. Distinct players; ≤<span id="mpg"></span> leg/game.
+    <b>3-pick base 6.5× confirmed; 4/5/6 estimates.</b>
+  </div>
+</header>
+<div class="wrap">
+  <div class="filters">
+    <label>Picks <select id="n"></select></label>
+    <label>Sort <select id="sort">
+      <option value="growth">Kelly growth</option><option value="ev">EV%</option>
+      <option value="kelly">Kelly %</option><option value="win">Win %</option></select></label>
+    <label>Min win % <input id="minwin" type="number" value="0" step="1" style="width:64px"></label>
+    <label>Max/game <input id="maxg" type="number" value="1" step="1" style="width:50px"></label>
+    <label><input type="checkbox" id="leastbad" style="width:auto"> Least-bad (incl −EV)</label>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="cards" id="cards"></div>
+  <div class="empty" id="empty" style="display:none">No entries match these filters.</div>
+</div>
+<script>
+const POOL=[{"player": "Curtis Mead", "game": "WSH @ BOS", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.1036, "mult": 7.23, "ud": "+1250", "ev": 0.3979}, {"player": "Miguel Rojas", "game": "LAD @ OAK", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0934, "mult": 7.23, "ud": "+1250", "ev": 0.2602}, {"player": "Shea Langeliers", "game": "LAD @ OAK", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0934, "mult": 7.21, "ud": "+1240", "ev": 0.2568}, {"player": "Luis Arraez", "game": "SF @ ARI", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0716, "mult": 9.25, "ud": "+1690", "ev": 0.236}, {"player": "Wade Meckler", "game": "LAA @ SEA", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0934, "mult": 7.03, "ud": "+1210", "ev": 0.2254}, {"player": "Colt Emerson", "game": "LAA @ SEA", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0934, "mult": 6.96, "ud": "+1200", "ev": 0.2132}, {"player": "Brett Baty", "game": "NYM @ TOR", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0875, "mult": 7.41, "ud": "+1280", "ev": 0.21}, {"player": "Colby Thomas", "game": "LAD @ OAK", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0821, "mult": 7.83, "ud": "+1340", "ev": 0.1997}, {"player": "Nick Allen", "game": "MIN @ HOU", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0612, "mult": 10.47, "ud": "+1900", "ev": 0.1958}, {"player": "Keibert Ruiz", "game": "WSH @ BOS", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0877, "mult": 7.3, "ud": "+1260", "ev": 0.1948}, {"player": "Ian Happ", "game": "SD @ CHC", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0875, "mult": 7.3, "ud": "+1260", "ev": 0.1921}, {"player": "TJ Friedl", "game": "CIN @ MIL", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0938, "mult": 6.74, "ud": "+1260", "ev": 0.1799}, {"player": "Nicky Lopez", "game": "TEX @ CLE", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0888, "mult": 7.03, "ud": "+1210", "ev": 0.165}, {"player": "Xander Bogaerts", "game": "SD @ CHC", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.1356, "mult": 4.58, "ud": "+809", "ev": 0.159}, {"player": "Max Schuemann", "game": "DET @ NYY", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0981, "mult": 6.33, "ud": "+1180", "ev": 0.1589}, {"player": "Luke Keaschall", "game": "MIN @ HOU", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0986, "mult": 6.29, "ud": "+1180", "ev": 0.1574}, {"player": "Donovan Walton", "game": "LAA @ SEA", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0958, "mult": 6.39, "ud": "+1200", "ev": 0.1425}, {"player": "Pavin Smith", "game": "SF @ ARI", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.105, "mult": 5.79, "ud": "+1090", "ev": 0.1346}, {"player": "Joey Ortiz", "game": "CIN @ MIL", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0861, "mult": 7.06, "ud": "+1310", "ev": 0.1344}, {"player": "Nelson Vel\u00e1zquez", "game": "STL @ ATL", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0841, "mult": 7.21, "ud": "+1240", "ev": 0.1316}, {"player": "Carter Jensen", "game": "TB @ KC", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0877, "mult": 6.9, "ud": "+1190", "ev": 0.1293}, {"player": "Nicky Lopez", "game": "TEX @ CLE", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0658, "mult": 9.14, "ud": "+1670", "ev": 0.1224}, {"player": "Taylor Ward", "game": "CWS @ BAL", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0841, "mult": 7.11, "ud": "+1230", "ev": 0.1159}, {"player": "Daniel Schneemann", "game": "TEX @ CLE", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.1186, "mult": 5.02, "ud": "+884", "ev": 0.1111}, {"player": "Geraldo Perdomo", "game": "SF @ ARI", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.138, "mult": 4.3, "ud": "+760", "ev": 0.1074}, {"player": "Brooks Lee", "game": "MIN @ HOU", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.1074, "mult": 5.51, "ud": "+970", "ev": 0.1044}, {"player": "Tanner Bibee", "game": "TEX @ CLE", "market": "Walks Allowed", "side": "under", "line": 1.5, "p": 0.5668, "mult": 1.04, "ud": "+105", "ev": 0.1001}, {"player": "Daulton Varsho", "game": "NYM @ TOR", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0934, "mult": 6.26, "ud": "+1090", "ev": 0.0912}, {"player": "Ryan Vilade", "game": "TB @ KC", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0822, "mult": 7.09, "ud": "+1220", "ev": 0.0877}, {"player": "Owen Caissie", "game": "MIA @ COL", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.1006, "mult": 5.79, "ud": "+1010", "ev": 0.087}, {"player": "Vladimir Guerrero", "game": "NYM @ TOR", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0877, "mult": 6.64, "ud": "+1150", "ev": 0.0868}, {"player": "Chase Meidroth", "game": "CWS @ BAL", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0821, "mult": 7.07, "ud": "+1320", "ev": 0.0833}, {"player": "Alika Williams", "game": "LAD @ OAK", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.099, "mult": 5.86, "ud": "+1100", "ev": 0.0827}, {"player": "Cam Smith", "game": "MIN @ HOU", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.1602, "mult": 3.62, "ud": "+620", "ev": 0.0823}, {"player": "Kyle Tucker", "game": "LAD @ OAK", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.11, "mult": 5.26, "ud": "+920", "ev": 0.0798}, {"player": "Andr\u00e9s Gim\u00e9nez", "game": "NYM @ TOR", "market": "Home Runs", "side": "over", "line": 0.5, "p": 0.0955, "mult": 6.05, "ud": "+1130", "ev": 0.0783}, {"player": "Jo Adell", "game": "LAA @ SEA", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0877, "mult": 6.58, "ud": "+1140", "ev": 0.077}, {"player": "Dansby Swanson", "game": "SD @ CHC", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.1201, "mult": 4.76, "ud": "+840", "ev": 0.0669}, {"player": "Steven Kwan", "game": "TEX @ CLE", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.0934, "mult": 6.09, "ud": "+1060", "ev": 0.0615}, {"player": "Andr\u00e9s Gim\u00e9nez", "game": "NYM @ TOR", "market": "Stolen Bases", "side": "over", "line": 0.5, "p": 0.1317, "mult": 4.31, "ud": "+761", "ev": 0.0593}, {"player": "Colt Keith", "game": "DET @ NYY", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7936, "mult": 0.6, "ud": "-435", "ev": -0.1114}, {"player": "Ryan Kreidler", "game": "MIN @ HOU", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7867, "mult": 0.63, "ud": "-358", "ev": -0.075}, {"player": "Zach McKinstry", "game": "DET @ NYY", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7861, "mult": 0.61, "ud": "-500", "ev": -0.1051}, {"player": "Ozzie Albies", "game": "STL @ ATL", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7831, "mult": 0.6, "ud": "-477", "ev": -0.1231}, {"player": "Steven Kwan", "game": "TEX @ CLE", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7816, "mult": 0.6, "ud": "-556", "ev": -0.1248}, {"player": "Patrick Bailey", "game": "TEX @ CLE", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7816, "mult": 0.61, "ud": "-527", "ev": -0.1102}, {"player": "Wade Meckler", "game": "LAA @ SEA", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7816, "mult": 0.6, "ud": "-556", "ev": -0.1248}, {"player": "Donovan Walton", "game": "LAA @ SEA", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7816, "mult": 0.61, "ud": "-500", "ev": -0.1102}, {"player": "Ezequiel Duran", "game": "TEX @ CLE", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7806, "mult": 0.62, "ud": "-385", "ev": -0.0968}, {"player": "Nicky Lopez", "game": "TEX @ CLE", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7758, "mult": 0.6, "ud": "-589", "ev": -0.1313}, {"player": "Mauricio Dub\u00f3n", "game": "STL @ ATL", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7738, "mult": 0.6, "ud": "-477", "ev": -0.1335}, {"player": "Patrick Bailey", "game": "TEX @ CLE", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7732, "mult": 0.63, "ud": "-358", "ev": -0.0909}, {"player": "Luis Arraez", "game": "SF @ ARI", "market": "Walks", "side": "under", "line": 0.5, "p": 0.772, "mult": 0.61, "ud": "-417", "ev": -0.1211}, {"player": "Jonah Heim", "game": "LAD @ OAK", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7709, "mult": 0.6, "ud": "-435", "ev": -0.1368}, {"player": "Nicky Lopez", "game": "TEX @ CLE", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7701, "mult": 0.61, "ud": "-417", "ev": -0.1233}, {"player": "Josh Jung", "game": "TEX @ CLE", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7699, "mult": 0.65, "ud": "-313", "ev": -0.0661}, {"player": "Jackson Merrill", "game": "SD @ CHC", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7699, "mult": 0.61, "ud": "-435", "ev": -0.1235}, {"player": "Hunter Goodman", "game": "MIA @ COL", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7664, "mult": 0.62, "ud": "-371", "ev": -0.1132}, {"player": "Nico Hoerner", "game": "SD @ CHC", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7653, "mult": 0.61, "ud": "-417", "ev": -0.1288}, {"player": "Ben Williamson", "game": "TB @ KC", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7641, "mult": 0.63, "ud": "-358", "ev": -0.1016}, {"player": "Michael Harris", "game": "STL @ ATL", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7638, "mult": 0.6, "ud": "-477", "ev": -0.1447}, {"player": "Kerry Carpenter", "game": "DET @ NYY", "market": "Walks", "side": "under", "line": 0.5, "p": 0.763, "mult": 0.61, "ud": "-417", "ev": -0.1314}, {"player": "Zach Neto", "game": "LAA @ SEA", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7628, "mult": 0.6, "ud": "-435", "ev": -0.1459}, {"player": "Henry Davis", "game": "PIT @ PHI", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7616, "mult": 0.64, "ud": "-400", "ev": -0.0903}, {"player": "Andr\u00e9s Gim\u00e9nez", "game": "NYM @ TOR", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7616, "mult": 0.61, "ud": "-500", "ev": -0.133}, {"player": "Alejandro Osuna", "game": "TEX @ CLE", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7595, "mult": 0.61, "ud": "-435", "ev": -0.1354}, {"player": "Zach McKinstry", "game": "DET @ NYY", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7594, "mult": 0.61, "ud": "-400", "ev": -0.1355}, {"player": "Jacob Young", "game": "WSH @ BOS", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7594, "mult": 0.62, "ud": "-400", "ev": -0.1213}, {"player": "Colt Emerson", "game": "LAA @ SEA", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7584, "mult": 0.63, "ud": "-435", "ev": -0.1083}, {"player": "Jake Burger", "game": "TEX @ CLE", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7572, "mult": 0.65, "ud": "-313", "ev": -0.0815}, {"player": "Brett Baty", "game": "NYM @ TOR", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7572, "mult": 0.62, "ud": "-477", "ev": -0.1239}, {"player": "Nasim Nu\u00f1ez", "game": "WSH @ BOS", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7572, "mult": 0.64, "ud": "-417", "ev": -0.0956}, {"player": "Logan O'Hoppe", "game": "LAA @ SEA", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7572, "mult": 0.62, "ud": "-455", "ev": -0.1239}, {"player": "Henry Bolte", "game": "LAD @ OAK", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7545, "mult": 0.63, "ud": "-358", "ev": -0.1129}, {"player": "Daniel Schneemann", "game": "TEX @ CLE", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7538, "mult": 0.63, "ud": "-371", "ev": -0.1137}, {"player": "Jos\u00e9 Caballero", "game": "DET @ NYY", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7538, "mult": 0.62, "ud": "-371", "ev": -0.1278}, {"player": "A.J. Ewing", "game": "NYM @ TOR", "market": "Walks", "side": "under", "line": 0.5, "p": 0.7538, "mult": 0.63, "ud": "-358", "ev": -0.1137}, {"player": "Taylor Trammell", "game": "MIN @ HOU", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7533, "mult": 0.63, "ud": "-417", "ev": -0.1143}, {"player": "Edouard Julien", "game": "MIA @ COL", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7533, "mult": 0.63, "ud": "-455", "ev": -0.1143}, {"player": "J.P. Crawford", "game": "LAA @ SEA", "market": "RBIs", "side": "under", "line": 0.5, "p": 0.7533, "mult": 0.63, "ud": "-417", "ev": -0.1143}]; const META={"league": "MLB", "fetched": "2026-06-30T20:17:12Z", "base": {"3": 6.5, "4": 10.0, "5": 20.0, "6": 37.5}, "maxPerGame": 1, "pickRange": [3, 6], "winProb": "sharp", "poolSize": 28};
+function* combos(n,k){const idx=[...Array(k).keys()];if(k>n||k<=0)return;
+  while(true){yield idx.slice();let i=k-1;while(i>=0&&idx[i]===i+n-k)i--;
+    if(i<0)return;idx[i]++;for(let j=i+1;j<k;j++)idx[j]=idx[j-1]+1;}}
+function fmtOdds(o){if(o==null)return '';const n=parseFloat(String(o).replace('+',''));return (n>0?'+':'')+n;}
+function fmtMT(iso){const d=new Date(iso);if(isNaN(d))return iso||'—';const o={timeZone:'America/Denver'};
+  const dt=new Intl.DateTimeFormat('en-CA',{...o,year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+  const tm=new Intl.DateTimeFormat('en-US',{...o,hour:'numeric',minute:'2-digit',hour12:true}).format(d);
+  return dt+' '+tm+' MT';}
+function selectPool(allowNeg){
+  // +EV mode: only +EV legs, ranked by edge (p×mult). Least-bad: all legs (incl
+  // discounted favorites), ranked by win prob to pull in safe anchors.
+  let legs=allowNeg?POOL.slice():POOL.filter(l=>l.ev!=null&&l.ev>=0);
+  legs.sort((a,b)=>allowNeg?(b.p-a.p):(b.p*b.mult-a.p*a.mult));
+  return legs.slice(0,META.poolSize);
+}
+function compute(N,maxg,allowNeg){
+  const base=META.base[N]; if(!base)return [];
+  const pool=selectPool(allowNeg); const out=[];
+  for(const c of combos(pool.length,N)){
+    const legs=c.map(i=>pool[i]); const players=new Set(); const games={}; let ok=true;
+    for(const l of legs){if(players.has(l.player)){ok=false;break;}players.add(l.player);
+      games[l.game]=(games[l.game]||0)+1; if(games[l.game]>maxg){ok=false;break;}}
+    if(!ok)continue;
+    let payout=base, win=1; for(const l of legs){payout*=l.mult; win*=l.p;}
+    const ev=win*payout-1, b=payout-1, f=ev/b;
+    let fc, growth;
+    if(f>0){fc=Math.min(f,1); growth=win*Math.log(1+fc*b)+(1-win)*Math.log(1-fc);}
+    else if(allowNeg){fc=0; growth=0;}      // −EV: Kelly says stake nothing
+    else continue;
+    out.push({N,legs,payout,win,ev,kelly:fc,growth});
+  }
+  return out;
+}
+function render(){
+  const N=parseInt(document.getElementById('n').value);
+  const allowNeg=document.getElementById('leastbad').checked;
+  let sort=document.getElementById('sort').value;
+  if(allowNeg&&sort==='growth')sort='ev';   // growth is 0 for −EV; rank by EV instead
+  const minwin=(parseFloat(document.getElementById('minwin').value)||0)/100;
+  const maxg=parseInt(document.getElementById('maxg').value)||1;
+  let e=compute(N,maxg,allowNeg).filter(x=>x.win>=minwin);
+  e.sort((a,b)=>b[sort]-a[sort]); e=e.slice(0,40);
+  document.getElementById('count').textContent=e.length+' entries';
+  const wrap=document.getElementById('cards'); wrap.innerHTML='';
+  document.getElementById('empty').style.display=e.length?'none':'block';
+  e.forEach((x,i)=>{
+    const legs=x.legs.map(l=>`<div class="leg"><span class="pl">${l.player}<span class="gm"> ${l.game}</span></span>`+
+      `<span class="mk">${l.market}</span><span class="sd ${l.side}">${l.side}</span>`+
+      `<span>${l.line}</span><span class="mu">x${l.mult.toFixed(2)}</span>`+
+      `<span class="pr">${(l.p*100).toFixed(0)}% · UD ${fmtOdds(l.ud)}</span></div>`).join('');
+    const evpct=x.ev*100, evs=(evpct>=0?'+':'')+evpct.toFixed(0)+'%';
+    wrap.insertAdjacentHTML('beforeend',
+      `<div class="entry"><div class="ehead"><span class="rank">#${i+1}</span>`+
+      `<span class="stat">win <b class="blue">${(x.win*100).toFixed(1)}%</b></span>`+
+      `<span class="stat">payout <b>${x.payout.toFixed(1)}x</b></span>`+
+      `<span class="stat">EV <b style="color:${evpct>=0?'var(--accent)':'var(--neg)'}">${evs}</b></span>`+
+      `<span class="stat">Kelly <b class="pur">${(x.kelly*100).toFixed(2)}%</b></span>`+
+      `<span class="stat">growth <b>${x.growth.toFixed(4)}</b></span></div>`+
+      `<div class="legs">${legs}</div></div>`);
+  });
+}
+function init(){
+  const lo=META.pickRange[0], hi=META.pickRange[1], sel=document.getElementById('n');
+  for(let k=lo;k<=hi;k++){if(META.base[k]){const o=document.createElement('option');o.value=k;o.textContent=k+'-pick';sel.appendChild(o);}}
+  document.getElementById('mpg').textContent=META.maxPerGame;
+  document.getElementById('meta').innerHTML=
+    `<span>League <b>${META.league}</b></span><span>pool <b>${POOL.length}</b> legs</span>`+
+    `<span>win-prob <b>${META.winProb}</b></span><span>Updated <b>${fmtMT(META.fetched)}</b></span>`;
+  ['n','sort','minwin','maxg','leastbad'].forEach(id=>document.getElementById(id)
+    .addEventListener(document.getElementById(id).tagName==='SELECT'?'change':'input',render));
+  render();
+}
+init();
+</script></body></html>
