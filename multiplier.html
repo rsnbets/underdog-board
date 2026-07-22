@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multiplier &harr; Odds — PROFITPATH Sports</title><meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#090909;--panel:#0D0D0D;--panel2:#141414;--line:rgba(255,255,255,0.05);--txt:#F0EEE8;
+--muted:rgba(255,255,255,0.42);--dim:rgba(255,255,255,0.25);--border-2:rgba(255,255,255,0.08);
+--accent:#4DFF78;--accent2:#00D4FF;--neg:#FF3D3D;--chip:#1C1C1C;
+--brand-orange:#FF8A3D;
+--s1:#3987e5;--s2:#d95926;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+header{padding:20px 16px 0;max-width:1400px;margin:0 auto}
+.back-bar{display:flex;align-items:center;gap:10px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:18px}
+.back-bar a{color:var(--muted);text-decoration:none}.back-bar a:hover{color:var(--accent2)}
+.back-bar .sep{color:var(--border-2)}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px 24px 22px;margin-bottom:14px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.wordmark{font-size:clamp(34px,6vw,52px);font-weight:900;line-height:.92;letter-spacing:-.03em;color:var(--txt)}
+.wordmark .accent{color:var(--accent)}
+.sports-suffix{display:block;font-size:11px;font-weight:400;letter-spacing:.5em;text-transform:uppercase;color:var(--brand-orange);margin:2px 0 16px}
+.tagline{font-size:clamp(17px,2.6vw,23px);letter-spacing:4px;text-transform:uppercase;color:var(--accent2);font-weight:800;margin-bottom:12px}
+.hero-meta{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace}
+.hero-meta b{color:var(--txt);font-weight:500}
+.hero-nav{margin-top:10px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.hero-nav a{color:var(--muted);text-decoration:none;margin:0 6px}
+.hero-nav a:hover,.hero-nav a.on{color:var(--accent2)}
+.wrap{padding:8px 16px 60px;max-width:1400px;margin:0 auto}
+.note{color:var(--muted);font-size:11.5px;line-height:1.55;margin-bottom:18px}
+.note b{color:var(--txt)}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin:0 0 10px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:16px;height:0;vertical-align:middle;margin-right:6px}
+.chartbox{position:relative;width:100%;height:330px;margin-bottom:26px}
+table{width:100%;border-collapse:collapse;font-size:13px;max-width:760px}
+thead th{position:sticky;top:0;background:var(--panel2);text-align:right;padding:9px 12px;border-bottom:1px solid var(--line);color:var(--dim);font-weight:600;font-size:10px;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap}
+thead th.l{text-align:left}
+tbody td{padding:6px 12px;border-bottom:1px solid var(--line);text-align:right;font-family:'DM Mono',monospace;white-space:nowrap}
+tbody td.l{text-align:left;font-family:'Plus Jakarta Sans'}
+tbody td.real{color:var(--accent);font-weight:500}
+tbody td.n{color:var(--dim);font-size:11.5px}
+tbody tr:hover td{background:#0f1620}
+tbody tr.hot td.l{color:var(--accent2);font-weight:700}
+.thin{color:var(--dim)}
+</style></head><body>
+<header>
+  <div class="back-bar">
+    <a href="https://www.profitpathsports.com/index.html">&larr; Profit Path Sports</a>
+    <span class="sep">/</span><span>Multiplier &harr; Odds</span>
+  </div>
+  <div class="hero">
+    <div class="wordmark">PROFIT<span class="accent">PATH</span></div>
+    <span class="sports-suffix">Sports</span>
+    <div class="tagline">Multiplier &harr; Odds</div>
+    <div class="hero-meta" id="meta">loading&hellip;</div>
+    <div class="hero-nav"><a href="./index.html">+EV Finder</a><a href="./optimizer.html">Optimizer</a><a href="./multiplier.html" class="on">Multiplier</a></div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="note" id="note"></div>
+  <div class="legend">
+    <span><i style="border-top:2px solid #3987e5"></i>UD shows &mdash; the tile price</span>
+    <span><i style="border-top:2px dashed #d95926"></i>Real leg &mdash; what you actually get</span>
+  </div>
+  <div class="chartbox"><canvas id="c" role="img" aria-label="Payout versus Underdog multiplier: displayed tile price against the real per-pick leg payout">At 1.0x the tile shows about -111 while the real leg is -115; the gap widens as the multiplier rises.</canvas></div>
+  <table><thead><tr>
+    <th class="l">Mult</th><th>UD shows</th><th>Real leg</th><th>Real breakeven</th><th>Picks</th>
+  </tr></thead><tbody id="tb"></tbody></table>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const ROWS=[{"mult": 0.6, "n": 61, "shown_dec": 1.24, "real_dec": 1.12, "shown": "-417", "real": "-835", "be": 89.3}, {"mult": 0.65, "n": 168, "shown_dec": 1.29, "real_dec": 1.213, "shown": "-345", "real": "-469", "be": 82.4}, {"mult": 0.7, "n": 373, "shown_dec": 1.39, "real_dec": 1.306, "shown": "-256", "real": "-326", "be": 76.5}, {"mult": 0.75, "n": 311, "shown_dec": 1.5, "real_dec": 1.4, "shown": "-200", "real": "-250", "be": 71.4}, {"mult": 0.8, "n": 330, "shown_dec": 1.6, "real_dec": 1.493, "shown": "-167", "real": "-203", "be": 67.0}, {"mult": 0.85, "n": 273, "shown_dec": 1.69, "real_dec": 1.586, "shown": "-145", "real": "-171", "be": 63.0}, {"mult": 0.9, "n": 87, "shown_dec": 1.75, "real_dec": 1.68, "shown": "-133", "real": "-147", "be": 59.5}, {"mult": 0.95, "n": 38, "shown_dec": 1.77, "real_dec": 1.773, "shown": "-130", "real": "-129", "be": 56.4}, {"mult": 1.0, "n": 707, "shown_dec": 1.9, "real_dec": 1.866, "shown": "-111", "real": "-115", "be": 53.6}, {"mult": 1.05, "n": 676, "shown_dec": 2.12, "real_dec": 1.96, "shown": "+112", "real": "-104", "be": 51.0}, {"mult": 1.1, "n": 244, "shown_dec": 2.33, "real_dec": 2.053, "shown": "+133", "real": "+105", "be": 48.7}, {"mult": 1.15, "n": 117, "shown_dec": 2.52, "real_dec": 2.146, "shown": "+152", "real": "+115", "be": 46.6}, {"mult": 1.2, "n": 79, "shown_dec": 2.62, "real_dec": 2.24, "shown": "+162", "real": "+124", "be": 44.7}, {"mult": 1.25, "n": 133, "shown_dec": 2.79, "real_dec": 2.333, "shown": "+179", "real": "+133", "be": 42.9}, {"mult": 1.3, "n": 111, "shown_dec": 2.92, "real_dec": 2.426, "shown": "+192", "real": "+143", "be": 41.2}, {"mult": 1.35, "n": 121, "shown_dec": 3.0, "real_dec": 2.519, "shown": "+200", "real": "+152", "be": 39.7}, {"mult": 1.4, "n": 32, "shown_dec": 3.32, "real_dec": 2.613, "shown": "+232", "real": "+161", "be": 38.3}, {"mult": 1.45, "n": 27, "shown_dec": 3.39, "real_dec": 2.706, "shown": "+239", "real": "+171", "be": 37.0}, {"mult": 1.5, "n": 21, "shown_dec": 3.48, "real_dec": 2.799, "shown": "+248", "real": "+180", "be": 35.7}, {"mult": 1.55, "n": 30, "shown_dec": 3.64, "real_dec": 2.893, "shown": "+264", "real": "+189", "be": 34.6}, {"mult": 1.6, "n": 24, "shown_dec": 3.805, "real_dec": 2.986, "shown": "+280", "real": "+199", "be": 33.5}, {"mult": 1.65, "n": 18, "shown_dec": 3.79, "real_dec": 3.079, "shown": "+279", "real": "+208", "be": 32.5}, {"mult": 1.7, "n": 16, "shown_dec": 4.005, "real_dec": 3.173, "shown": "+300", "real": "+217", "be": 31.5}, {"mult": 1.75, "n": 19, "shown_dec": 4.01, "real_dec": 3.266, "shown": "+301", "real": "+227", "be": 30.6}, {"mult": 1.8, "n": 10, "shown_dec": 4.09, "real_dec": 3.359, "shown": "+309", "real": "+236", "be": 29.8}, {"mult": 1.85, "n": 20, "shown_dec": 4.18, "real_dec": 3.453, "shown": "+318", "real": "+245", "be": 29.0}, {"mult": 1.9, "n": 15, "shown_dec": 4.29, "real_dec": 3.546, "shown": "+329", "real": "+255", "be": 28.2}, {"mult": 1.95, "n": 11, "shown_dec": 4.39, "real_dec": 3.639, "shown": "+339", "real": "+264", "be": 27.5}, {"mult": 2.0, "n": 10, "shown_dec": 4.545, "real_dec": 3.733, "shown": "+354", "real": "+273", "be": 26.8}, {"mult": 2.05, "n": 13, "shown_dec": 4.57, "real_dec": 3.826, "shown": "+357", "real": "+283", "be": 26.1}, {"mult": 2.1, "n": 12, "shown_dec": 4.68, "real_dec": 3.919, "shown": "+368", "real": "+292", "be": 25.5}, {"mult": 2.15, "n": 12, "shown_dec": 4.77, "real_dec": 4.012, "shown": "+377", "real": "+301", "be": 24.9}, {"mult": 2.2, "n": 11, "shown_dec": 4.86, "real_dec": 4.106, "shown": "+386", "real": "+311", "be": 24.4}, {"mult": 2.25, "n": 8, "shown_dec": 4.93, "real_dec": 4.199, "shown": "+393", "real": "+320", "be": 23.8}, {"mult": 2.3, "n": 10, "shown_dec": 5.065, "real_dec": 4.292, "shown": "+406", "real": "+329", "be": 23.3}, {"mult": 2.35, "n": 9, "shown_dec": 5.14, "real_dec": 4.386, "shown": "+414", "real": "+339", "be": 22.8}, {"mult": 2.4, "n": 11, "shown_dec": 5.28, "real_dec": 4.479, "shown": "+428", "real": "+348", "be": 22.3}, {"mult": 2.45, "n": 10, "shown_dec": 5.345, "real_dec": 4.572, "shown": "+435", "real": "+357", "be": 21.9}, {"mult": 2.5, "n": 12, "shown_dec": 5.46, "real_dec": 4.666, "shown": "+446", "real": "+367", "be": 21.4}, {"mult": 2.55, "n": 8, "shown_dec": 5.58, "real_dec": 4.759, "shown": "+458", "real": "+376", "be": 21.0}, {"mult": 2.6, "n": 7, "shown_dec": 5.64, "real_dec": 4.852, "shown": "+464", "real": "+385", "be": 20.6}, {"mult": 2.65, "n": 10, "shown_dec": 5.75, "real_dec": 4.946, "shown": "+475", "real": "+395", "be": 20.2}, {"mult": 2.7, "n": 4, "shown_dec": 5.835, "real_dec": 5.039, "shown": "+484", "real": "+404", "be": 19.8}, {"mult": 2.75, "n": 12, "shown_dec": 5.935, "real_dec": 5.132, "shown": "+494", "real": "+413", "be": 19.5}, {"mult": 2.8, "n": 6, "shown_dec": 6.065, "real_dec": 5.226, "shown": "+506", "real": "+423", "be": 19.1}, {"mult": 2.85, "n": 3, "shown_dec": 6.1, "real_dec": 5.319, "shown": "+510", "real": "+432", "be": 18.8}, {"mult": 2.95, "n": 6, "shown_dec": 6.19, "real_dec": 5.505, "shown": "+519", "real": "+451", "be": 18.2}, {"mult": 3.0, "n": 13, "shown_dec": 6.41, "real_dec": 5.599, "shown": "+541", "real": "+460", "be": 17.9}], META={"base": 1.8663, "refN": 3, "picks": 4259, "fetched": "2026-07-22T15:26:30Z", "league": "MLB"};
+function fmtMT(iso){const d=new Date(iso);if(isNaN(d))return iso||'—';const o={timeZone:'America/Denver'};
+  const dt=new Intl.DateTimeFormat('en-CA',{...o,year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+  const tm=new Intl.DateTimeFormat('en-US',{...o,hour:'numeric',minute:'2-digit',hour12:true}).format(d);
+  return dt+' '+tm+' MT';}
+document.getElementById('meta').innerHTML=
+  `<b>${META.picks.toLocaleString()}</b> picks &nbsp;·&nbsp; ${META.refN}-pick basis &nbsp;·&nbsp; base per leg <b>${META.base}x</b> &nbsp;·&nbsp; slate <b>${fmtMT(META.fetched)}</b>`;
+document.getElementById('note').innerHTML=
+  `Underdog's tile price is <b>not</b> what you get paid. Your true per-pick payout is `+
+  `<b>base-per-leg &times; multiplier</b> = <b>${META.base} &times; mult</b> on a ${META.refN}-pick. `+
+  `The tile runs closer to <b>2.0 &times; mult</b> &mdash; that spread is the hold you don't see. `+
+  `<b>Real leg</b> and <b>Real breakeven</b> are exact math; <b>UD shows</b> is the median observed tile price, `+
+  `so buckets with few picks (<span class="thin">greyed count</span>) are noisy.`;
+const tb=document.getElementById('tb');
+ROWS.forEach(r=>{
+  const hot=(r.mult===1||r.mult===1.05)?' class="hot"':'';
+  tb.insertAdjacentHTML('beforeend',
+    `<tr${hot}><td class="l">${r.mult.toFixed(2)}x</td><td>${r.shown||'—'}</td>`+
+    `<td class="real">${r.real||'—'}</td><td>${r.be}%</td>`+
+    `<td class="n"${r.n<30?' style="opacity:.5"':''}>${r.n}</td></tr>`);
+});
+const dk=matchMedia('(prefers-color-scheme: dark)').matches;
+const S1='#3987e5',S2='#d95926',GRID='#2c2c2a',MUTED='#898781';
+const amer=d=>d<=1?'—':(d>=2?'+'+Math.round((d-1)*100):'-'+Math.round(100/(d-1)));
+new Chart(document.getElementById('c'),{type:'line',
+ data:{labels:ROWS.map(r=>r.mult),datasets:[
+  {label:'UD shows',data:ROWS.map(r=>r.shown_dec),borderColor:S1,backgroundColor:S1,borderWidth:2,pointRadius:0,pointHoverRadius:5,tension:.25},
+  {label:'Real leg',data:ROWS.map(r=>r.real_dec),borderColor:S2,backgroundColor:S2,borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:5,tension:.25}]},
+ options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{display:false},tooltip:{callbacks:{
+    title:c=>'Multiplier  '+Number(c[0].label).toFixed(2)+'x',
+    label:c=>c.dataset.label+':  '+amer(c.parsed.y)+'   ('+c.parsed.y.toFixed(2)+' dec)'}}},
+  scales:{x:{title:{display:true,text:'payout multiplier',color:MUTED,font:{size:11}},grid:{display:false},
+      ticks:{color:MUTED,font:{size:11},maxRotation:0,callback:function(v){const m=ROWS[v].mult;return (Math.round(m*100)%50===0)?m.toFixed(1)+'x':''}}},
+   y:{title:{display:true,text:'payout (decimal)',color:MUTED,font:{size:11}},grid:{color:GRID},border:{display:false},
+      ticks:{color:MUTED,font:{size:11},callback:v=>v.toFixed(1)}}}}
+});
+</script></body></html>
